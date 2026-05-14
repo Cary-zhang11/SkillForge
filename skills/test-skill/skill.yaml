@@ -1,4 +1,4 @@
 name: test-skill
 version: 1.0.0
-description: A test skill for unit testing
+description: 用于单元测试的示例技能
 interactive: false
