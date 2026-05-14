@@ -1,23 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install *)",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)",
-      "Bash(npx vitest *)",
-      "Bash(git commit *)",
-      "Bash(npm rebuild *)",
-      "Bash(node -e \"console.log\\(process.version\\)\")",
-      "Bash(ls \"C:/Program Files \\(x86\\)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/\")",
-      "Read(//c/Program Files \\(x86\\)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/**)",
-      "Bash(ls \"C:/Program Files \\(x86\\)/Windows Kits/\")",
-      "Read(//c/Program Files \\(x86\\)/Windows Kits/**)",
-      "Bash(npm config *)",
-      "Bash(npx --yes prebuild-install -r napi -t 9 --verbose)",
-      "Bash(npm view *)",
-      "Bash(taskkill /F /IM node.exe)",
-      "Bash(taskkill //F //IM node.exe)",
-      "Bash(npx --yes rimraf d:/cursor_workspace/SkillForge/node_modules/better-sqlite3 d:/cursor_workspace/SkillForge/packages/server/node_modules/better-sqlite3)"
+      "Edit(/**)",
+      "Bash(*)",
+      "Read(/**)",
+      "Write(/**)",
+      "WebFetch(*)",
+      "WebSearch(*)"
     ]
   }
 }
