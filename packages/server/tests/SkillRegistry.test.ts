@@ -4,6 +4,7 @@ import { db } from '../src/db.js';
 
 describe('SkillRegistry', () => {
   beforeEach(() => {
+    db.exec('DELETE FROM tasks');
     db.exec('DELETE FROM skills');
   });
 

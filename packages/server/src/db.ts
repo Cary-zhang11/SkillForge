@@ -1,7 +1,11 @@
 import Database from 'better-sqlite3';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { mkdirSync } from 'fs';
 
 const DB_PATH = process.env.SKILLFORGE_DB || join(process.cwd(), 'data', 'skillforge.db');
+
+// Ensure database directory exists
+mkdirSync(dirname(DB_PATH), { recursive: true });
 
 export const db = new Database(DB_PATH);
 
