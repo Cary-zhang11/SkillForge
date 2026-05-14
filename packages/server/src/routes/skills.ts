@@ -18,4 +18,10 @@ router.get('/:id', (req, res) => {
   res.json({ skill });
 });
 
+router.post('/scan', (_req, res) => {
+  registry.scanAndRegister();
+  const skills = registry.listSkills();
+  res.json({ skills, message: 'Skills rescanned' });
+});
+
 export default router;
