@@ -13,13 +13,17 @@ RUN apt-get update && apt-get install -y \
 # Install Claude Code globally
 RUN npm install -g @anthropic-ai/claude-code
 
-# Create non-root user
-RUN useradd -m -u 1000 claude
+# Create non-root user with restricted home
+RUN useradd -m -u 1000 -s /bin/bash claude \
+    && mkdir -p /workspace \
+    && chown claude:claude /workspace
+
+# Switch to non-root user
 USER claude
 WORKDIR /workspace
 
-# Claude Code will use this directory for skill discovery
+# Claude Code skill discovery path
 ENV CLAUDE_SKILLS_PATH=/workspace/.claude/skills
 
-# Default command: start Claude Code in project mode
-CMD ["claude"]
+# Default: keep container alive for task execution
+CMD ["sleep", "3600"]

@@ -87,6 +87,11 @@ export class AgentPoolManager {
         CpuQuota: this.config.cpuLimit * 100000,
         NetworkMode: 'bridge',
         AutoRemove: false,
+        // Security hardening
+        ReadonlyRootfs: false, // Claude Code needs to write to ~/.claude
+        SecurityOpt: ['no-new-privileges:true'],
+        CapDrop: ['ALL'],
+        CapAdd: ['CHOWN', 'SETGID', 'SETUID'], // Minimum capabilities
       },
       WorkingDir: '/workspace',
       Cmd: ['sleep', '3600'], // Keep container alive, we'll exec commands in it

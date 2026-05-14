@@ -12,6 +12,7 @@ import { AgentPoolManager } from './services/AgentPoolManager.js';
 import { FileService } from './services/FileService.js';
 import { TaskSocket } from './websocket/TaskSocket.js';
 import { TaskExecutor } from './services/TaskExecutor.js';
+import { validateTaskInput } from './middleware/validation.js';
 
 import skillsRoute from './routes/skills.js';
 import filesRoute from './routes/files.js';
@@ -58,7 +59,7 @@ app.use('/api/skills', skillsRoute);
 app.use('/api/files', filesRoute);
 
 // Tasks route with execution
-app.post('/api/tasks', async (req, res) => {
+app.post('/api/tasks', validateTaskInput, async (req, res) => {
   const { userId, skillId, skillVersion, inputs, fileIds, mode } = req.body;
 
   if (!userId || !skillId || !mode) {
