@@ -2,14 +2,13 @@ import { readdirSync, statSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import { db } from '../db.js';
+import { config } from '../config.js';
 import type { SkillManifest } from '../types.js';
-
-const SKILLS_DIR = process.env.SKILLFORGE_SKILLS_DIR || join(process.cwd(), 'skills');
 
 export class SkillRegistry {
   private skillsDir: string;
 
-  constructor(skillsDir: string = SKILLS_DIR) {
+  constructor(skillsDir: string = config.skillsDir) {
     this.skillsDir = skillsDir;
     this.scanAndRegister();
   }
