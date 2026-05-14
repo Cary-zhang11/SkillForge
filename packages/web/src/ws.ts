@@ -1,4 +1,4 @@
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws';
+const WS_URL = (import.meta as any).env.VITE_WS_URL || 'ws://localhost:3000/ws';
 
 export class TaskWebSocket {
   private ws: WebSocket | null = null;

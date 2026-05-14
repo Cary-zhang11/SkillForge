@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TaskWebSocket } from '../ws';
+import { TaskWebSocket } from '../ws.js';
 
 interface TaskMessage {
   type: 'status' | 'output' | 'interactive_prompt' | 'error';
@@ -21,19 +21,20 @@ export function useTaskSocket(taskId: string | null) {
 
     const socket = new TaskWebSocket(
       taskId,
-      (message: TaskMessage) => {
-        switch (message.type) {
+      (message) => {
+        const msg = message as TaskMessage;
+        switch (msg.type) {
           case 'status':
-            setStatus(message.state || 'unknown');
+            setStatus(msg.state || 'unknown');
             break;
           case 'output':
-            setOutput((prev) => prev + (message.data || ''));
+            setOutput((prev) => prev + (msg.data || ''));
             break;
           case 'interactive_prompt':
-            setInteractivePrompt(message.prompt || null);
+            setInteractivePrompt(msg.prompt || null);
             break;
           case 'error':
-            setOutput((prev) => prev + `\n[Error: ${message.error}]\n`);
+            setOutput((prev) => prev + `\n[Error: ${msg.error}]\n`);
             break;
         }
       },
