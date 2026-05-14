@@ -11,9 +11,9 @@ import { TaskOrchestrator } from './services/TaskOrchestrator.js';
 import { AgentPoolManager } from './services/AgentPoolManager.js';
 import { FileService } from './services/FileService.js';
 import { TaskSocket } from './websocket/TaskSocket.js';
+import { TaskExecutor } from './services/TaskExecutor.js';
 
 import skillsRoute from './routes/skills.js';
-import tasksRoute from './routes/tasks.js';
 import filesRoute from './routes/files.js';
 
 // Initialize database
@@ -36,6 +36,14 @@ const taskSocket = new TaskSocket({
   fileService,
 });
 
+const taskExecutor = new TaskExecutor({
+  agentPool,
+  orchestrator: taskOrchestrator,
+  skillRegistry,
+  fileService,
+  taskSocket,
+});
+
 // Express app
 const app = express();
 app.use(cors());
@@ -47,8 +55,56 @@ app.use('/results', express.static(config.resultsDir));
 
 // API routes
 app.use('/api/skills', skillsRoute);
-app.use('/api/tasks', tasksRoute);
 app.use('/api/files', filesRoute);
+
+// Tasks route with execution
+app.post('/api/tasks', async (req, res) => {
+  const { userId, skillId, skillVersion, inputs, fileIds, mode } = req.body;
+
+  if (!userId || !skillId || !mode) {
+    res.status(400).json({ error: 'Missing required fields' });
+    return;
+  }
+
+  try {
+    const task = taskOrchestrator.createTask({
+      userId,
+      skillId,
+      skillVersion: skillVersion || '1.0.0',
+      inputs: inputs || {},
+      fileIds: fileIds || [],
+      mode,
+    });
+
+    // Start execution asynchronously
+    taskExecutor.execute(task).catch((err) => {
+      console.error('Task execution error:', err);
+    });
+
+    res.status(201).json({ task });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create task' });
+  }
+});
+
+app.get('/api/tasks/:id', (req, res) => {
+  const task = taskOrchestrator.getTask(req.params.id);
+  if (!task) {
+    res.status(404).json({ error: 'Task not found' });
+    return;
+  }
+  res.json({ task });
+});
+
+app.get('/api/tasks', (req, res) => {
+  const userId = req.query.userId as string;
+  if (!userId) {
+    res.status(400).json({ error: 'userId required' });
+    return;
+  }
+  const tasks = taskOrchestrator.listTasks(userId);
+  res.json({ tasks });
+});
 
 // Health check
 app.get('/health', (_req, res) => {
