@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { Rocket, Paperclip, X, ArrowLeft, Loader2 } from 'lucide-react';
 import { createTask, uploadFile } from '../api.js';
+import { toast } from '../utils/toast.js';
 import type { SkillManifest } from '../types.js';
 
 interface TaskSubmitFormProps {
@@ -24,8 +26,9 @@ export default function TaskSubmitForm({ skill, userId, onTaskCreated, onBack }:
       const result = await uploadFile(file);
       setFileIds((prev) => [...prev, result.file.id]);
       setFileNames((prev) => [...prev, file.name]);
+      toast(`Uploaded: ${file.name}`, 'success');
     } catch (err) {
-      alert('Upload failed: ' + (err as Error).message);
+      toast('Upload failed: ' + (err as Error).message, 'error');
     } finally {
       setUploading(false);
     }
@@ -52,7 +55,7 @@ export default function TaskSubmitForm({ skill, userId, onTaskCreated, onBack }:
 
   const handleSubmit = async () => {
     if (skill.interactive && mode === 'background') {
-      alert('Interactive skills cannot run in background mode');
+      toast('Interactive skills cannot run in background mode', 'error');
       return;
     }
 
@@ -68,7 +71,7 @@ export default function TaskSubmitForm({ skill, userId, onTaskCreated, onBack }:
       });
       onTaskCreated(result.task.id);
     } catch (err) {
-      alert('Failed to create task: ' + (err as Error).message);
+      toast('Failed to create task: ' + (err as Error).message, 'error');
       setSubmitting(false);
     }
   };
@@ -165,7 +168,7 @@ export default function TaskSubmitForm({ skill, userId, onTaskCreated, onBack }:
               dragOver ? 'border-primary bg-primary/5' : 'border-slate-300 hover:border-slate-400'
             }`}
           >
-            <div className="text-3xl mb-2">📎</div>
+            <Paperclip className="w-10 h-10 mx-auto mb-2 text-slate-400" />
             <p className="text-slate-600 mb-1">
               {uploading ? 'Uploading...' : 'Drop files here or click to browse'}
             </p>
@@ -195,7 +198,7 @@ export default function TaskSubmitForm({ skill, userId, onTaskCreated, onBack }:
                     onClick={() => removeFile(index)}
                     className="text-slate-400 hover:text-error transition-colors ml-2"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -221,9 +224,10 @@ export default function TaskSubmitForm({ skill, userId, onTaskCreated, onBack }:
         <div className="flex items-center justify-between pt-4 border-t border-slate-100">
           <button
             onClick={onBack}
-            className="px-6 py-3 text-slate-600 hover:text-slate-800 transition-colors"
+            className="px-6 py-3 text-slate-600 hover:text-slate-800 transition-colors flex items-center gap-2"
           >
-            ← Cancel
+            <ArrowLeft className="w-4 h-4" />
+            Cancel
           </button>
           <button
             onClick={handleSubmit}
@@ -232,12 +236,13 @@ export default function TaskSubmitForm({ skill, userId, onTaskCreated, onBack }:
           >
             {submitting ? (
               <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Starting...
               </>
             ) : (
               <>
-                🚀 Start Task
+                <Rocket className="w-4 h-4" />
+                Start Task
               </>
             )}
           </button>

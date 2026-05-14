@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { RefreshCw, Search, FolderOpen, AlertTriangle, Loader2, ArrowRight } from 'lucide-react';
 import { fetchSkills } from '../api.js';
 import type { SkillManifest } from '../types.js';
 
@@ -62,7 +63,7 @@ export default function SkillBrowser({ onSelectSkill }: SkillBrowserProps) {
     return (
       <div className="max-w-6xl">
         <div className="bg-error/10 border border-error/20 rounded-xl p-6 text-center">
-          <div className="text-4xl mb-3">⚠️</div>
+          <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-error" />
           <h3 className="text-lg font-semibold text-error mb-2">Failed to load skills</h3>
           <p className="text-slate-600 mb-4">{error}</p>
           <button
@@ -89,16 +90,18 @@ export default function SkillBrowser({ onSelectSkill }: SkillBrowserProps) {
           >
             {scanning ? (
               <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Scanning...
               </>
             ) : (
-              <>🔄 Refresh Skills</>
+              <>
+                <RefreshCw className="w-4 h-4" /> Refresh Skills
+              </>
             )}
           </button>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-          <div className="text-6xl mb-4">📂</div>
+          <FolderOpen className="w-16 h-16 mx-auto mb-4 text-slate-300" />
           <h3 className="text-xl font-semibold text-slate-800 mb-2">No Skills Found</h3>
           <p className="text-slate-500 mb-2">Place your skill folders in the</p>
           <code className="bg-slate-100 px-2 py-1 rounded text-sm">skills/</code>
@@ -123,18 +126,20 @@ export default function SkillBrowser({ onSelectSkill }: SkillBrowserProps) {
         >
           {scanning ? (
             <>
-              <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></span>
+              <Loader2 className="w-4 h-4 animate-spin" />
               Scanning...
             </>
           ) : (
-            <>🔄 Refresh</>
+            <>
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </>
           )}
         </button>
       </div>
 
       {/* Search */}
       <div className="relative mb-6">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
         <input
           type="text"
           placeholder="Search skills by name or description..."
@@ -167,8 +172,8 @@ export default function SkillBrowser({ onSelectSkill }: SkillBrowserProps) {
             </p>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-mono bg-slate-100 px-2 py-1 rounded">v{skill.version}</span>
-              <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                Start →
+              <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                Start <ArrowRight className="w-3 h-3" />
               </span>
             </div>
           </div>
@@ -178,8 +183,8 @@ export default function SkillBrowser({ onSelectSkill }: SkillBrowserProps) {
       {/* No search results */}
       {filtered.length === 0 && search && (
         <div className="text-center py-12">
-          <div className="text-4xl mb-3">🔍</div>
-          <p className="text-slate-500">No skills match "{search}"</p>
+          <Search className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+          <p className="text-slate-500">No skills match &quot;{search}&quot;</p>
         </div>
       )}
     </div>

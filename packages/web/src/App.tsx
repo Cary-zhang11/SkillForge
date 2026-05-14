@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Wrench, ClipboardList, Folder, ArrowLeft } from 'lucide-react';
 import SkillBrowser from './components/SkillBrowser.js';
 import TaskSubmitForm from './components/TaskSubmitForm.js';
 import TaskOutputPanel from './components/TaskOutputPanel.js';
@@ -14,13 +15,22 @@ export default function App() {
   const [page, setPage] = useState<Page>('skills');
 
   const handleBack = () => {
-    setActiveTaskId(null);
-    setSelectedSkill(null);
-    setPage('skills');
+    if (activeTaskId) {
+      setActiveTaskId(null);
+    } else if (selectedSkill) {
+      setSelectedSkill(null);
+    } else {
+      setPage('skills');
+    }
   };
 
   const handleTaskCreated = (taskId: string) => {
     setActiveTaskId(taskId);
+  };
+
+  const navigateTo = (targetPage: Page) => {
+    setPage(targetPage);
+    setActiveTaskId(null);
     setSelectedSkill(null);
   };
 
@@ -37,28 +47,28 @@ export default function App() {
 
         <nav className="flex-1 p-4 space-y-1">
           <button
-            onClick={() => { setPage('skills'); handleBack(); }}
+            onClick={() => navigateTo('skills')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 ${
               page === 'skills' ? 'bg-primary/20 text-primary-light' : 'text-slate-400 hover:bg-slate-700 hover:text-white'
             }`}
           >
-            <span>🛠️</span> Skills
+            <Wrench className="w-5 h-5" /> Skills
           </button>
           <button
-            onClick={() => setPage('tasks')}
+            onClick={() => navigateTo('tasks')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 ${
               page === 'tasks' ? 'bg-primary/20 text-primary-light' : 'text-slate-400 hover:bg-slate-700 hover:text-white'
             }`}
           >
-            <span>📋</span> Tasks
+            <ClipboardList className="w-5 h-5" /> Tasks
           </button>
           <button
-            onClick={() => setPage('files')}
+            onClick={() => navigateTo('files')}
             className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 ${
               page === 'files' ? 'bg-primary/20 text-primary-light' : 'text-slate-400 hover:bg-slate-700 hover:text-white'
             }`}
           >
-            <span>📁</span> Files
+            <Folder className="w-5 h-5" /> Files
           </button>
         </nav>
 
@@ -77,16 +87,28 @@ export default function App() {
         {/* Header */}
         <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            {activeTaskId && (
+            {(activeTaskId || selectedSkill) && (
               <button
                 onClick={handleBack}
                 className="flex items-center gap-1 text-primary hover:text-primary-hover transition-colors"
               >
-                ← Back
+                <ArrowLeft className="w-4 h-4" /> Back
               </button>
             )}
-            {activeTaskId && <span className="text-slate-300">/</span>}
+            {(activeTaskId || selectedSkill) && <span className="text-slate-300">/</span>}
             <span className="capitalize">{page}</span>
+            {selectedSkill && (
+              <>
+                <span className="text-slate-300">/</span>
+                <span className="text-slate-600 truncate max-w-[200px]">{selectedSkill.name}</span>
+              </>
+            )}
+            {activeTaskId && (
+              <>
+                <span className="text-slate-300">/</span>
+                <span className="text-slate-600 font-mono text-xs">{activeTaskId.slice(0, 8)}...</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
@@ -115,7 +137,7 @@ export default function App() {
 
           {page === 'tasks' && !activeTaskId && !selectedSkill && (
             <div className="text-center py-20">
-              <div className="text-6xl mb-4">📋</div>
+              <ClipboardList className="w-20 h-20 mx-auto mb-4 text-slate-300" />
               <h2 className="text-2xl font-semibold text-slate-800 mb-2">Task History</h2>
               <p className="text-slate-500">View your past tasks and results here.</p>
               <p className="text-slate-400 text-sm mt-2">(Coming soon)</p>
@@ -124,7 +146,7 @@ export default function App() {
 
           {page === 'files' && !activeTaskId && !selectedSkill && (
             <div className="text-center py-20">
-              <div className="text-6xl mb-4">📁</div>
+              <Folder className="w-20 h-20 mx-auto mb-4 text-slate-300" />
               <h2 className="text-2xl font-semibold text-slate-800 mb-2">Files</h2>
               <p className="text-slate-500">Manage your uploaded and result files.</p>
               <p className="text-slate-400 text-sm mt-2">(Coming soon)</p>

@@ -116,6 +116,14 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Serve frontend static files
+app.use(express.static(config.webDistDir));
+
+// SPA fallback — serve index.html for all non-API routes
+app.get('*', (_req, res) => {
+  res.sendFile(join(config.webDistDir, 'index.html'));
+});
+
 // HTTP server
 const server = createServer(app);
 
