@@ -54,7 +54,11 @@ export class TaskSocket {
       if (!task || !task.containerId) return;
 
       const input = (message.payload as { text: string }).text;
-      await this.agentPool.execInContainer(task.containerId, ['sh', '-c', `echo "${input}"`]);
+      const base64Input = Buffer.from(input).toString('base64');
+      await this.agentPool.execInContainer(task.containerId, [
+        'sh', '-c',
+        `printf '%s' '${base64Input}' | base64 -d > /tmp/user_input.txt`,
+      ]);
     }
   }
 

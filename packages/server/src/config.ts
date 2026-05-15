@@ -18,4 +18,5 @@ export const config = {
   containerCpuLimit: parseInt(process.env.CONTAINER_CPU_LIMIT || '2'),
   taskTimeoutSeconds: parseInt(process.env.TASK_TIMEOUT_SECONDS || '1800'),
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  mockExecution: process.env.MOCK_EXECUTION === 'true',
 };

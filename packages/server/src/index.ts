@@ -107,6 +107,16 @@ app.get('/api/tasks', (req, res) => {
   res.json({ tasks });
 });
 
+app.post('/api/tasks/:id/cancel', (req, res) => {
+  const success = taskOrchestrator.cancelTask(req.params.id);
+  if (!success) {
+    res.status(400).json({ error: 'Task not found or cannot be cancelled' });
+    return;
+  }
+  taskSocket.sendStatus(req.params.id, 'cancelled');
+  res.json({ message: 'Task cancelled' });
+});
+
 // Health check
 app.get('/health', (_req, res) => {
   res.json({
@@ -142,9 +152,13 @@ wss.on('connection', (ws, req) => {
   taskSocket.handleConnection(ws, taskId);
 });
 
+// Start timeout watcher
+agentPool.startTimeoutWatcher();
+
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down...');
+  agentPool.stopTimeoutWatcher();
   wss.close();
   await agentPool.cleanup();
   server.close(() => {
@@ -157,4 +171,7 @@ server.listen(config.port, config.host, () => {
   console.log(`SkillForge server running on http://${config.host}:${config.port}`);
   console.log(`Skills directory: ${config.skillsDir}`);
   console.log(`Max concurrent tasks: ${config.maxConcurrentTasks}`);
+  if (config.mockExecution) {
+    console.log('Mock execution mode enabled (Docker containers will not be created)');
+  }
 });

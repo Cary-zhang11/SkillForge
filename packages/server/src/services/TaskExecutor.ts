@@ -3,6 +3,7 @@ import { TaskOrchestrator } from './TaskOrchestrator.js';
 import { SkillRegistry } from './SkillRegistry.js';
 import { FileService } from './FileService.js';
 import { TaskSocket } from '../websocket/TaskSocket.js';
+import { config } from '../config.js';
 import type { Task } from '../types.js';
 
 interface TaskExecutorOptions {
@@ -29,6 +30,11 @@ export class TaskExecutor {
   }
 
   async execute(task: Task): Promise<void> {
+    if (config.mockExecution) {
+      await this.mockExecute(task);
+      return;
+    }
+
     try {
       // 1. Validate skill exists
       const skill = this.skillRegistry.getSkill(task.skillId);
@@ -78,18 +84,23 @@ export class TaskExecutor {
       this.taskSocket.sendStatus(task.id, 'running');
 
       // 6. Execute Claude Code with the skill
-      // We pass the user's text input as the initial prompt to Claude Code
       const userInput = task.inputs.text || '';
       const skillName = skill.name;
 
-      // Start Claude Code in the container and feed the input
-      // This is a simplified approach - in production we'd use a more robust PTY integration
+      // Write user input to a file via base64 to avoid shell injection
+      const base64Input = Buffer.from(userInput).toString('base64');
+      await this.agentPool.execInContainer(containerId, [
+        'sh', '-c',
+        `printf '%s' '${base64Input}' | base64 -d > /tmp/task_input.txt`,
+      ]);
+
+      // Execute Claude Code reading from the safe file
       const { stdout, stderr, exitCode } = await this.agentPool.execInContainer(
         containerId,
         [
           'sh',
           '-c',
-          `echo "${userInput.replace(/"/g, '\\"')}" | claude --skill "${skillName}" --non-interactive 2>&1 || true`,
+          `cat /tmp/task_input.txt | claude --skill "${skillName}" --non-interactive 2>&1 || true`,
         ]
       );
 
@@ -142,5 +153,51 @@ export class TaskExecutor {
         await this.agentPool.destroyTaskContainer(task.id);
       }
     }
+  }
+
+  private async mockExecute(task: Task): Promise<void> {
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const skill = this.skillRegistry.getSkill(task.skillId);
+    const skillName = skill?.name || task.skillId;
+    const userInput = task.inputs.text || '(empty)';
+
+    // 1. preparing
+    this.orchestrator.updateState(task.id, 'preparing');
+    this.taskSocket.sendStatus(task.id, 'preparing');
+    await delay(800);
+
+    // 2. running
+    this.orchestrator.updateState(task.id, 'running');
+    this.taskSocket.sendStatus(task.id, 'running');
+
+    const lines = [
+      '[mock] Initializing skill environment...',
+      `[mock] Skill: ${skillName}`,
+      `[mock] Mode: ${task.mode}`,
+      `[mock] Files attached: ${task.fileIds.length}`,
+      '',
+      '--- Mock Execution ---',
+      'This is a simulated execution (MOCK_EXECUTION=true).',
+      'In production, Claude Code runs in an isolated Docker container.',
+      '',
+      'User input:',
+      ...userInput.split('\n'),
+      '',
+      '[mock] Step 1: Loading skill manifest',
+      '[mock] Step 2: Preparing workspace',
+      '[mock] Step 3: Executing skill logic',
+      '',
+      '[mock] Execution completed successfully.',
+    ];
+
+    for (const line of lines) {
+      this.taskSocket.sendOutput(task.id, line + '\n');
+      await delay(200);
+    }
+
+    // 3. completed
+    this.orchestrator.updateState(task.id, 'completed');
+    this.taskSocket.sendStatus(task.id, 'completed');
   }
 }

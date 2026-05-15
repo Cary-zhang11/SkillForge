@@ -2,21 +2,24 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db.js';
+import { config } from '../config.js';
 import type { StoredFile } from '../types.js';
 
-const UPLOADS_DIR = process.env.SKILLFORGE_UPLOADS_DIR || join(process.cwd(), 'uploads');
-const RESULTS_DIR = process.env.SKILLFORGE_RESULTS_DIR || join(process.cwd(), 'results');
-
 export class FileService {
+  private uploadsDir: string;
+  private resultsDir: string;
+
   constructor() {
-    if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
-    if (!existsSync(RESULTS_DIR)) mkdirSync(RESULTS_DIR, { recursive: true });
+    this.uploadsDir = config.uploadsDir;
+    this.resultsDir = config.resultsDir;
+    if (!existsSync(this.uploadsDir)) mkdirSync(this.uploadsDir, { recursive: true });
+    if (!existsSync(this.resultsDir)) mkdirSync(this.resultsDir, { recursive: true });
   }
 
   saveUpload(originalName: string, mimeType: string, buffer: Buffer): StoredFile {
     const id = uuidv4();
     const fileName = `${id}-${originalName}`;
-    const filePath = join(UPLOADS_DIR, fileName);
+    const filePath = join(this.uploadsDir, fileName);
 
     writeFileSync(filePath, buffer);
 
@@ -40,7 +43,7 @@ export class FileService {
 
   async saveResult(taskId: string, fileName: string, buffer: Buffer): Promise<StoredFile> {
     const id = uuidv4();
-    const resultPath = join(RESULTS_DIR, taskId);
+    const resultPath = join(this.resultsDir, taskId);
     if (!existsSync(resultPath)) mkdirSync(resultPath, { recursive: true });
 
     const filePath = join(resultPath, fileName);

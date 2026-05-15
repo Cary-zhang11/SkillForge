@@ -2,6 +2,7 @@ import Docker from 'dockerode';
 import { join } from 'path';
 import { mkdirSync, existsSync, cpSync, rmSync } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { config as appConfig } from '../config.js';
 
 interface AgentPoolConfig {
   maxConcurrent: number;
@@ -9,6 +10,7 @@ interface AgentPoolConfig {
   memoryLimit?: number;
   cpuLimit?: number;
   timeoutSeconds?: number;
+  workDirBase?: string;
 }
 
 interface ContainerTask {
@@ -22,6 +24,7 @@ export class AgentPoolManager {
   private docker: Docker;
   private config: Required<AgentPoolConfig>;
   private runningTasks: Map<string, ContainerTask>;
+  private timeoutInterval: NodeJS.Timeout | null = null;
 
   constructor(config: AgentPoolConfig) {
     this.docker = new Docker();
@@ -31,8 +34,32 @@ export class AgentPoolManager {
       memoryLimit: config.memoryLimit || 4 * 1024 * 1024 * 1024, // 4GB
       cpuLimit: config.cpuLimit || 2,
       timeoutSeconds: config.timeoutSeconds || 1800, // 30 minutes
+      workDirBase: config.workDirBase || appConfig.rootDir,
     };
     this.runningTasks = new Map();
+  }
+
+  startTimeoutWatcher(): void {
+    if (this.timeoutInterval) return;
+    this.timeoutInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [taskId, task] of this.runningTasks) {
+        const elapsedSec = (now - task.startTime) / 1000;
+        if (elapsedSec > this.config.timeoutSeconds) {
+          console.warn(`Task ${taskId} timed out after ${Math.round(elapsedSec)}s`);
+          this.destroyTaskContainer(taskId).catch((err) =>
+            console.error(`Failed to destroy timed-out task ${taskId}:`, err)
+          );
+        }
+      }
+    }, 30000); // Check every 30 seconds
+  }
+
+  stopTimeoutWatcher(): void {
+    if (this.timeoutInterval) {
+      clearInterval(this.timeoutInterval);
+      this.timeoutInterval = null;
+    }
   }
 
   getAvailableCapacity(): number {
@@ -50,7 +77,7 @@ export class AgentPoolManager {
     }
 
     // Create temporary work directory
-    const workDir = join(process.cwd(), 'tmp', taskId);
+    const workDir = join(this.config.workDirBase, 'tmp', taskId);
     if (existsSync(workDir)) rmSync(workDir, { recursive: true });
     mkdirSync(workDir, { recursive: true });
 
@@ -184,6 +211,7 @@ export class AgentPoolManager {
   }
 
   async cleanup(): Promise<void> {
+    this.stopTimeoutWatcher();
     for (const taskId of this.runningTasks.keys()) {
       await this.destroyTaskContainer(taskId);
     }

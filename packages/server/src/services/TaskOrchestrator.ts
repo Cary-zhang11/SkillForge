@@ -121,6 +121,17 @@ export class TaskOrchestrator {
     stmt.run(JSON.stringify(resultFileIds), 'completed', id);
   }
 
+  cancelTask(id: string): boolean {
+    const task = this.getTask(id);
+    if (!task) return false;
+    const cancellable = ['pending', 'queued', 'preparing', 'running', 'awaiting_input'];
+    if (!cancellable.includes(task.state)) return false;
+
+    const stmt = db.prepare('UPDATE tasks SET state = ?, completed_at = ? WHERE id = ?');
+    stmt.run('cancelled', Date.now(), id);
+    return true;
+  }
+
   private rowToTask(row: {
     id: string;
     user_id: string;
